@@ -53,16 +53,21 @@ func ProcessKafkaMessage(reader *kafka.Reader, conn *pgx.Conn) {
 	log.Println("Attempting to read a message from Kafka...")
 	msg, err := reader.ReadMessage(ctx)
 	if err != nil {
+		if err == context.DeadlineExceeded {
+			log.Println("No messages received from Kafka within the allocated time.")
+			return
+		}
 		log.Printf("Error reading message from Kafka: %v\n", err)
 		return
 	}
-	log.Printf("Message received: Partition=%d, Offset=%d, Key=%s", msg.Partition, msg.Offset, string(msg.Key))
+
+	log.Printf("Message received - Partition: %d, Offset: %d, Key: %s", msg.Partition, msg.Offset, string(msg.Key))
 
 	// 메시지 디코딩
 	var data models.IoTData
 	err = json.Unmarshal(msg.Value, &data)
 	if err != nil {
-		log.Printf("Error unmarshalling Kafka message: %v\n", err)
+		log.Printf("Error unmarshalling Kafka message: %v\nMessage Value: %s", err, string(msg.Value))
 		return
 	}
 	log.Printf("Message unmarshalled successfully: %+v", data)
