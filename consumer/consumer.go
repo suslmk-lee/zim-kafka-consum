@@ -49,37 +49,45 @@ func ProcessKafkaMessage(reader *kafka.Reader, conn *pgx.Conn) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// 메시지 읽기 시도 로그
-	log.Println("Attempting to read a message from Kafka...")
-	msg, err := reader.ReadMessage(ctx)
-	if err != nil {
-		if err == context.DeadlineExceeded {
-			log.Println("No messages received from Kafka within the allocated time.")
+	const maxRetries = 3
+	for retries := 0; retries < maxRetries; retries++ {
+		log.Println("Attempting to read a message from Kafka...")
+		msg, err := reader.ReadMessage(ctx)
+		if err != nil {
+			if err == context.DeadlineExceeded {
+				log.Println("No messages received from Kafka within the allocated time.")
+				return
+			}
+			log.Printf("Error reading message from Kafka (attempt %d): %v\n", retries+1, err)
+			time.Sleep(2 * time.Second) // 재시도 전에 잠시 대기
+			continue
+		}
+
+		log.Printf("Message received - Partition: %d, Offset: %d, Key: %s", msg.Partition, msg.Offset, string(msg.Key))
+
+		// 메시지 디코딩
+		var data models.IoTData
+		err = json.Unmarshal(msg.Value, &data)
+		if err != nil {
+			log.Printf("Error unmarshalling Kafka message: %v\nMessage Value: %s", err, string(msg.Value))
 			return
 		}
-		log.Printf("Error reading message from Kafka: %v\n", err)
+		log.Printf("Message unmarshalled successfully: %+v", data)
+
+		// 최신 데이터 저장 (뮤텍스 사용)
+		models.SaveLatestData(data)
+
+		// 데이터베이스에 삽입
+		err = models.InsertIoTData(conn, data)
+		if err != nil {
+			log.Printf("Error inserting data into DB: %v\n", err)
+		} else {
+			log.Printf("Data inserted into DB from Kafka at %v\n", data.Timestamp)
+		}
+
+		// 성공적으로 메시지를 처리했으므로 루프를 종료합니다.
 		return
 	}
 
-	log.Printf("Message received - Partition: %d, Offset: %d, Key: %s", msg.Partition, msg.Offset, string(msg.Key))
-
-	// 메시지 디코딩
-	var data models.IoTData
-	err = json.Unmarshal(msg.Value, &data)
-	if err != nil {
-		log.Printf("Error unmarshalling Kafka message: %v\nMessage Value: %s", err, string(msg.Value))
-		return
-	}
-	log.Printf("Message unmarshalled successfully: %+v", data)
-
-	// 최신 데이터 저장 (뮤텍스 사용)
-	models.SaveLatestData(data)
-
-	// 데이터베이스에 삽입
-	err = models.InsertIoTData(conn, data)
-	if err != nil {
-		log.Printf("Error inserting data into DB: %v\n", err)
-	} else {
-		log.Printf("Data inserted into DB from Kafka at %v\n", data.Timestamp)
-	}
+	log.Println("Max retries reached. Skipping message processing.")
 }
