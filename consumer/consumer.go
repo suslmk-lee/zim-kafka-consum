@@ -25,7 +25,7 @@ func getEnv(key, fallback string) string {
 func CreateKafkaReader() *kafka.Reader {
 	broker := fmt.Sprintf("%s:%s", getEnv("KAFKA_HOST", config.KafkaHost), getEnv("KAFKA_PORT", config.KafkaPort))
 	topic := getEnv("KAFKA_TOPIC", config.KafkaTopic)
-	groupID := getEnv("KAFKA_GROUP_ID", config.GroupID)
+	groupID := getEnv("KAFKA_GROUP_ID", "zim-consumer-group") // 기본값 설정
 
 	log.Printf("Kafka Reader Configuration - Broker: %s, Topic: %s, GroupID: %s", broker, topic, groupID)
 
@@ -33,8 +33,9 @@ func CreateKafkaReader() *kafka.Reader {
 		Brokers:  []string{broker},
 		Topic:    topic,
 		GroupID:  groupID,
-		MinBytes: 10e3, // 10KB
-		MaxBytes: 10e6, // 10MB
+		MinBytes: 10e3,                                         // 10KB
+		MaxBytes: 10e6,                                         // 10MB
+		Logger:   log.New(os.Stdout, "DEBUG: ", log.LstdFlags), // 상세 로그 출력
 		// 기타 설정 추가 가능
 	})
 
