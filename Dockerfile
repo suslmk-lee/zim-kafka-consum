@@ -8,8 +8,7 @@ ENV GO111MODULE=on \
 WORKDIR /build
 
 COPY go.mod go.sum main.go ./
-RUN go mod download
-RUN go mod tidy
+
 
 COPY api ./api
 COPY common ./common
@@ -17,7 +16,8 @@ COPY config ./config
 COPY consumer ./consumer
 COPY db ./db
 COPY models ./models
-
+RUN go mod download
+RUN go mod tidy
 RUN go build -o main .
 
 WORKDIR /dist
