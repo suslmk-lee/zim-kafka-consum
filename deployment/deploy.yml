@@ -73,6 +73,9 @@ spec:
         - name: db-init-container
           image: postgres:13-alpine
           command: ["sh", "-c", "psql -h $DATABASE_HOST -U $DATABASE_USER -d $DATABASE_NAME -f /docker-entrypoint-initdb.d/init.sql"]
+          env:
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: "trust"
           envFrom:
             - configMapRef:
                 name: zim-kafka-consumer-config
