@@ -8,6 +8,9 @@ data:
   DATABASE_HOST: "postgresql-cp.iot-db"
   DATABASE_NAME: "cp-db"
   DATABASE_PORT: "5432"
+  KAFKA_HOST: "133.186.209.209"
+  KAFKA_PORT: "31092"
+  KAFKA_TOPIC: "cp-db-topic"
   INIT_DB_SCHEMA: |
     CREATE TABLE IF NOT EXISTS iot_data (
       device VARCHAR(50),

@@ -9,15 +9,17 @@ import (
 )
 
 var (
-	KafkaTopic  string
-	KafkaBroker string
-	GroupID     string
+	KafkaTopic string
+	KafkaHost  string
+	KafkaPort  string
+	GroupID    string
 )
 
 // LoadKafkaConfig - Kafka 설정 정보 로드 함수
 func LoadKafkaConfig() {
 	KafkaTopic = common.ConfInfo["kafka.topic"]
-	KafkaBroker = common.ConfInfo["kafka.broker"]
+	KafkaHost = common.ConfInfo["kafka.broker"]
+	KafkaPort = common.ConfInfo["kafka.port"]
 	GroupID = common.ConfInfo["kafka.group_id"]
 }
 

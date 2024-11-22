@@ -7,17 +7,26 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/segmentio/kafka-go"
 	"log"
+	"os"
 	"time"
 	"zim-kafka-comsum/config"
 	"zim-kafka-comsum/models"
 )
 
+// getEnv - 환경 변수를 가져오는 함수, 기본값을 제공
+func getEnv(key, fallback string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return fallback
+}
+
 // CreateKafkaReader - Kafka 리더 설정 함수
 func CreateKafkaReader() *kafka.Reader {
 	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{config.KafkaBroker},
-		Topic:   config.KafkaTopic,
-		GroupID: config.GroupID,
+		Brokers: []string{fmt.Sprintf("%s:%s", getEnv("KAFKA_HOST", config.KafkaHost), getEnv("KAFKA_PORT", config.KafkaPort))},
+		Topic:   getEnv("KAFKA_TOPIC", config.KafkaTopic),
+		GroupID: getEnv("KAFKA_GROUP_ID", config.GroupID),
 	})
 	return reader
 }
