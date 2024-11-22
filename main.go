@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"zim-kafka-comsum/api"
 	"zim-kafka-comsum/config"
@@ -18,7 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
-	defer conn.Close()
+	defer conn.Close(context.Background())
 	log.Println("Connected to database")
 
 	// Kafka 컨슈머 설정
