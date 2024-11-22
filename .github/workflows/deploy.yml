@@ -13,7 +13,7 @@ jobs:
       IMAGE_NAME: "zim-kafka-consumer"
       REGISTRY: "44ce789b-kr1-registry.container.nhncloud.com/container-platform-registry"
       NAMESPACE: "iot-edge"
-      DEPLOYMENT_NAME: "zim-consumer-deployment"
+      DEPLOYMENT_NAME: "zim-kafka-consumer-deployment"
       CLUSTER_NAME: "kt-cluster"
       KUBECONFIG_DATA: ${{ secrets.KUBECONFIG_DATA }}
 
@@ -48,3 +48,7 @@ jobs:
       - name: Apply Kubernetes Deployment
         run: |
           kubectl apply -f deployment/deploy.yml -n $NAMESPACE
+
+      - name: Restart Kubernetes Deployment
+        run: |
+          kubectl rollout restart deployment/$DEPLOYMENT_NAME -n $NAMESPACE
