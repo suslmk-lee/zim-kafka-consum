@@ -30,9 +30,9 @@ func CreateKafkaReader() *kafka.Reader {
 	log.Printf("Kafka Reader Configuration - Broker: %s, Topic: %s, GroupID: %s", broker, topic, groupID)
 
 	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  []string{broker},
-		Topic:    topic,
-		GroupID:  groupID,
+		Brokers: []string{broker},
+		Topic:   topic,
+		//GroupID:  groupID,
 		MinBytes: 10e3,                                         // 10KB
 		MaxBytes: 10e6,                                         // 10MB
 		Logger:   log.New(os.Stdout, "DEBUG: ", log.LstdFlags), // 상세 로그 출력
