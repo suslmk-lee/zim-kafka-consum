@@ -44,8 +44,8 @@ func main() {
 
 	go api.StartAPIServer()
 
-	messageChan := make(chan common.IoTData, 1000) // 버퍼 크기는 필요에 따라 조정
-	workerCount := 5                               // 워커 수는 시스템 자원에 따라 조정
+	messageChan := make(chan common.IoTData, 1000) // 버퍼 크기
+	workerCount := 5                               // 워커 수
 	for i := 0; i < workerCount; i++ {
 		go consumer.Worker(ctx, pool, messageChan)
 	}

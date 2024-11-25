@@ -11,6 +11,7 @@ data:
   KAFKA_HOST: "133.186.209.209"
   KAFKA_PORT: "31092"
   KAFKA_TOPIC: "cp-db-topic"
+  KAFKA_GROUP_ID: "zim-consumer-group"
   INIT_DB_SCHEMA: |
     CREATE TABLE IF NOT EXISTS iot_data (
       device VARCHAR(50),

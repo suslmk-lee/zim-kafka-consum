@@ -30,7 +30,7 @@ func CreateKafkaReader() *kafka.Reader {
 		MaxBytes:       10e6,                   // 10MB
 		CommitInterval: time.Second,            // 오프셋 커밋 간격
 		MaxWait:        500 * time.Millisecond, // 메시지 대기 시간
-		Logger:         log.New(log.Writer(), "DEBUG: ", log.LstdFlags),
+		//Logger:         log.New(log.Writer(), "DEBUG: ", log.LstdFlags),
 	})
 
 	log.Println("Kafka reader successfully created and ready to consume messages")

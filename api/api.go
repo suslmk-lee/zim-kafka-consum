@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// StartAPIServer - 간단한 API 서버 시작 함수
+// StartAPIServer - 간단한 API 서버 시작 함수 / health, data
 func StartAPIServer() {
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/data", dataHandler)

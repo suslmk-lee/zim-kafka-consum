@@ -1,4 +1,3 @@
-// db/db.go
 package db
 
 import (
@@ -11,7 +10,6 @@ import (
 	"zim-kafka-comsum/common"
 )
 
-// ConnectDB - 데이터베이스 연결 풀 생성 함수
 func ConnectDB(ctx context.Context, dbURL string) (*pgxpool.Pool, error) {
 	pool, err := pgxpool.Connect(ctx, dbURL)
 	if err != nil {
@@ -20,13 +18,11 @@ func ConnectDB(ctx context.Context, dbURL string) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-// InsertBatch - 배치 삽입 함수
 func InsertBatch(ctx context.Context, pool *pgxpool.Pool, batch []common.IoTData) {
 	if len(batch) == 0 {
 		return
 	}
 
-	// 트랜잭션 시작
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		log.Printf("Failed to begin transaction: %v\n", err)
@@ -34,12 +30,13 @@ func InsertBatch(ctx context.Context, pool *pgxpool.Pool, batch []common.IoTData
 	}
 	defer tx.Rollback(ctx)
 
-	// SQL 쿼리 동적 생성
 	sql := `
 		INSERT INTO IoT_Data (
-			Device, Timestamp, ProVer, MinorVer, SN, Model, TYield, DYield, PF, PMax, PAC, SAC,
-			UAB, UBC, UCA, IA, IB, IC, Freq, TMod, TAmb, Mode, QAC, BusCapacitance,
-			ACCapacitance, PDC, PMaxLim, SMaxLim, IsSent
+			device, timestamp, pro_ver, minor_ver, sn, model, 
+	  		tyield, dyield, pf, pmax, pac, sac, 
+	  		uab, ubc, uca, ia, ib, ic, 
+	  		freq, tmod,tamb, mode, qac, bus_capacitance,
+	  		ac_capacitance, pdc, pmax_lim, smax_lim, is_sent
 		) VALUES
 	`
 	valueStrings := make([]string, 0, len(batch))
