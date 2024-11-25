@@ -1,93 +1,144 @@
+// consumer/consumer.go
 package consumer
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/jackc/pgx/v4"
-	"github.com/segmentio/kafka-go"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
-	"os"
 	"time"
+
+	"github.com/segmentio/kafka-go"
 	"zim-kafka-comsum/config"
-	"zim-kafka-comsum/models"
+	"zim-kafka-comsum/db"
 )
 
-// getEnv - 환경 변수를 가져오는 함수, 기본값을 제공
-func getEnv(key, fallback string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	return fallback
+type IoTData struct {
+	Device         string    `json:"Device"`
+	Timestamp      time.Time `json:"Timestamp"`
+	ProVer         int       `json:"ProVer"`
+	MinorVer       int       `json:"MinorVer"`
+	SN             int64     `json:"SN"`
+	Model          string    `json:"Model"`
+	TYield         float64   `json:"TYield"`
+	DYield         float64   `json:"DYield"`
+	PF             float64   `json:"PF"`
+	PMax           float64   `json:"PMax"`
+	PAC            float64   `json:"PAC"`
+	SAC            float64   `json:"SAC"`
+	UAB            float64   `json:"UAB"`
+	UBC            float64   `json:"UBC"`
+	UCA            float64   `json:"UCA"`
+	IA             float64   `json:"IA"`
+	IB             float64   `json:"IB"`
+	IC             float64   `json:"IC"`
+	Freq           float64   `json:"Freq"`
+	TMod           float64   `json:"TMod"`
+	TAmb           float64   `json:"TAmb"`
+	Mode           string    `json:"Mode"`
+	QAC            float64   `json:"QAC"`
+	BusCapacitance float64   `json:"BusCapacitance"`
+	ACCapacitance  float64   `json:"ACCapacitance"`
+	PDC            float64   `json:"PDC"`
+	PMaxLim        float64   `json:"PMaxLim"`
+	SMaxLim        float64   `json:"SMaxLim"`
+	IsSent         bool      `json:"IsSent"`
+	RegTimestamp   time.Time `json:"RegTimestamp"`
 }
 
 // CreateKafkaReader - Kafka 리더 설정 함수
 func CreateKafkaReader() *kafka.Reader {
-	broker := fmt.Sprintf("%s:%s", getEnv("KAFKA_HOST", config.KafkaHost), getEnv("KAFKA_PORT", config.KafkaPort))
-	topic := getEnv("KAFKA_TOPIC", config.KafkaTopic)
-	groupID := getEnv("KAFKA_GROUP_ID", "zim-consumer-group") // 기본값 설정
+	brokers := config.KafkaBrokers
+	topic := config.KafkaTopic
+	groupID := config.GroupID
 
-	log.Printf("Kafka Reader Configuration - Broker: %s, Topic: %s, GroupID: %s", broker, topic, groupID)
+	log.Printf("Kafka Reader Configuration - Brokers: %v, Topic: %s, GroupID: %s", brokers, topic, groupID)
 
 	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  []string{broker},
-		Topic:    topic,
-		GroupID:  groupID,
-		MinBytes: 10e3,                                         // 10KB
-		MaxBytes: 10e6,                                         // 10MB
-		Logger:   log.New(os.Stdout, "DEBUG: ", log.LstdFlags), // 상세 로그 출력
-		// 기타 설정 추가 가능
+		Brokers:        brokers,
+		Topic:          topic,
+		GroupID:        groupID,
+		MinBytes:       10e3,                   // 10KB
+		MaxBytes:       10e6,                   // 10MB
+		CommitInterval: time.Second,            // 오프셋 커밋 간격
+		MaxWait:        500 * time.Millisecond, // 메시지 대기 시간
+		Logger:         log.New(log.Writer(), "DEBUG: ", log.LstdFlags),
 	})
 
-	// Kafka 리더 생성 성공 로그
 	log.Println("Kafka reader successfully created and ready to consume messages")
 	return reader
 }
 
-// ProcessKafkaMessage - Kafka 메시지 처리 함수
-func ProcessKafkaMessage(reader *kafka.Reader, conn *pgx.Conn) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+// ReadMessages - Kafka에서 메시지를 읽어 채널로 전달하는 함수
+func ReadMessages(ctx context.Context, reader *kafka.Reader, messageChan chan<- IoTData) {
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("Message reader shutting down")
+			close(messageChan)
+			return
+		default:
+			msg, err := reader.ReadMessage(ctx)
+			if err != nil {
+				if err == context.Canceled {
+					continue
+				}
+				log.Printf("Error reading message from Kafka: %v\n", err)
+				continue
+			}
 
-	const maxRetries = 3
-	for retries := 0; retries < maxRetries; retries++ {
-		log.Println("Attempting to read a message from Kafka...")
-		msg, err := reader.ReadMessage(ctx)
-		if err != nil {
-			if err == context.DeadlineExceeded {
-				log.Println("No messages received from Kafka within the allocated time.")
+			var data IoTData
+			err = json.Unmarshal(msg.Value, &data)
+			if err != nil {
+				log.Printf("Error unmarshalling Kafka message: %v\nMessage Value: %s", err, string(msg.Value))
+				continue
+			}
+			log.Printf("Message unmarshalled successfully: %+v", data)
+
+			messageChan <- data
+		}
+	}
+}
+
+// Worker - 메시지를 받아 배치로 DB에 삽입하는 워커 함수
+func Worker(ctx context.Context, pool *pgxpool.Pool, messageChan <-chan IoTData) {
+	batchSize := 100
+	batchTimeout := 2 * time.Second
+	batch := make([]IoTData, 0, batchSize)
+	timer := time.NewTimer(batchTimeout)
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("Worker shutting down")
+			if len(batch) > 0 {
+				db.InsertBatch(ctx, pool, batch)
+			}
+			return
+		case msg, ok := <-messageChan:
+			if !ok {
+				log.Println("Message channel closed")
+				if len(batch) > 0 {
+					db.InsertBatch(ctx, pool, batch)
+				}
 				return
 			}
-			log.Printf("Error reading message from Kafka (attempt %d): %v\n", retries+1, err)
-			time.Sleep(2 * time.Second) // 재시도 전에 잠시 대기
-			continue
+			batch = append(batch, msg)
+			if len(batch) >= batchSize {
+				db.InsertBatch(ctx, pool, batch)
+				batch = batch[:0]
+				if !timer.Stop() {
+					<-timer.C
+				}
+				timer.Reset(batchTimeout)
+			}
+		case <-timer.C:
+			if len(batch) > 0 {
+				db.InsertBatch(ctx, pool, batch)
+				batch = batch[:0]
+			}
+			timer.Reset(batchTimeout)
 		}
-
-		log.Printf("Message received - Partition: %d, Offset: %d, Key: %s", msg.Partition, msg.Offset, string(msg.Key))
-
-		// 메시지 디코딩
-		var data models.IoTData
-		err = json.Unmarshal(msg.Value, &data)
-		if err != nil {
-			log.Printf("Error unmarshalling Kafka message: %v\nMessage Value: %s", err, string(msg.Value))
-			return
-		}
-		log.Printf("Message unmarshalled successfully: %+v", data)
-
-		// 최신 데이터 저장 (뮤텍스 사용)
-		models.SaveLatestData(data)
-
-		// 데이터베이스에 삽입
-		err = models.InsertIoTData(conn, data)
-		if err != nil {
-			log.Printf("Error inserting data into DB: %v\n", err)
-		} else {
-			log.Printf("Data inserted into DB from Kafka at %v\n", data.Timestamp)
-		}
-
-		// 성공적으로 메시지를 처리했으므로 루프를 종료합니다.
-		return
 	}
-
-	log.Println("Max retries reached. Skipping message processing.")
 }

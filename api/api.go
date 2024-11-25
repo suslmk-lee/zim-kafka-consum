@@ -1,26 +1,29 @@
+// api/api.go
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"zim-kafka-comsum/models"
 )
 
-// StartAPIServer - API 서버 시작 함수
+// StartAPIServer - 간단한 API 서버 시작 함수
 func StartAPIServer() {
-	http.HandleFunc("/realtime-data", func(w http.ResponseWriter, r *http.Request) {
-		models.LatestDataMutex.RLock()
-		defer models.LatestDataMutex.RUnlock()
+	http.HandleFunc("/health", healthHandler)
+	http.HandleFunc("/data", dataHandler)
 
-		// 최신 데이터를 JSON으로 반환
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(models.LatestData); err != nil {
-			http.Error(w, "Failed to encode data", http.StatusInternalServerError)
-		}
-	})
+	port := "8080"
+	log.Printf("Starting API server on port %s...\n", port)
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
+		log.Fatalf("API server failed: %v\n", err)
+	}
+}
 
-	fmt.Println("Starting API server on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "OK")
+}
+
+func dataHandler(w http.ResponseWriter, r *http.Request) {
+	// 데이터 조회 로직을 여기에 구현
+	fmt.Fprintf(w, "Data API endpoint")
 }

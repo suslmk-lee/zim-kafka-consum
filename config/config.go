@@ -3,64 +3,57 @@ package config
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"zim-kafka-comsum/common"
 )
 
 var (
-	KafkaTopic string
-	KafkaHost  string
-	KafkaPort  string
-	GroupID    string
+	KafkaBrokers []string
+	KafkaTopic   string
+	KafkaHost    string
+	KafkaPort    string
+	GroupID      string
+	DatabaseURL  string
 )
+
+// LoadConfig - 모든 설정 로드 함수
+func LoadConfig() {
+	// 공통 설정 초기화
+	common.InitConfig()
+
+	LoadKafkaConfig()
+	LoadDBConfig()
+}
 
 // LoadKafkaConfig - Kafka 설정 정보 로드 함수
 func LoadKafkaConfig() {
-	KafkaTopic = common.ConfInfo["kafka.topic"]
-	KafkaHost = common.ConfInfo["kafka.broker"]
-	KafkaPort = common.ConfInfo["kafka.port"]
-	GroupID = common.ConfInfo["kafka.group_id"]
+	KafkaTopic = common.ConfInfo["KAFKA_TOPIC"]
+	KafkaHost = common.ConfInfo["KAFKA_HOST"]
+	KafkaPort = common.ConfInfo["KAFKA_PORT"]
+	GroupID = common.ConfInfo["KAFKA_GROUP_ID"]
+
+	if GroupID == "" {
+		GroupID = "zim-consumer-group" // 기본값 설정
+	}
+
+	// Kafka 브로커 주소 조합
+	broker := KafkaHost + ":" + KafkaPort
+	KafkaBrokers = []string{broker}
 }
 
-// GetDataSource - PostgreSQL 연결 문자열 구성
-func GetDataSource() string {
-	var databaseHost, databaseName, databaseUser, databasePassword, databasePort string
-
-	// 환경 변수에서 프로파일 가져오기 (없으면 기본값 "local")
-	profile := "local"
-	if len(os.Getenv("PROFILE")) > 0 {
-		profile = os.Getenv("PROFILE")
-	}
-
-	// prod 프로파일일 경우 환경 변수에서 DB 정보 가져오기
-	switch profile {
-	case "prod":
-		databaseHost = getEnv("DATABASE_HOST", "localhost")
-		databaseName = getEnv("DATABASE_NAME", "default_prod_db")
-		databaseUser = getEnv("DATABASE_USER", "default_prod_user")
-		databasePassword = getEnv("DATABASE_PASSWORD", "default_prod_password")
-		databasePort = getEnv("DATABASE_PORT", "5432")
-	default:
-		// local 프로파일일 경우 common 패키지에서 설정 정보 가져오기
-		log.Println("Using local profile = ", profile)
-		databaseHost = common.ConfInfo["database.host"]
-		databaseName = common.ConfInfo["database.name"]
-		databaseUser = common.ConfInfo["database.user"]
-		databasePassword = common.ConfInfo["database.password"]
-		databasePort = common.ConfInfo["database.port"]
-		log.Println(databaseUser)
-	}
+// LoadDBConfig - DB 설정 로드 함수
+func LoadDBConfig() {
+	databaseHost := common.ConfInfo["DATABASE_HOST"]
+	databaseName := common.ConfInfo["DATABASE_NAME"]
+	databaseUser := common.ConfInfo["DATABASE_USER"]
+	databasePassword := common.ConfInfo["DATABASE_PASSWORD"]
+	databasePort := common.ConfInfo["DATABASE_PORT"]
 
 	// PostgreSQL 데이터 소스 문자열 구성
-	dataSource := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", databaseUser, databasePassword, databaseHost, databasePort, databaseName)
-	return dataSource
+	DatabaseURL = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		databaseUser, databasePassword, databaseHost, databasePort, databaseName)
 }
 
-// getEnv 함수 - 환경 변수 가져오기
-func getEnv(key, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	return defaultValue
+// GetDataSource - PostgreSQL 연결 문자열 반환
+func GetDataSource() string {
+	return DatabaseURL
 }
