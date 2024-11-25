@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"zim-kafka-comsum/api"
+	"zim-kafka-comsum/common"
 	"zim-kafka-comsum/config"
 	"zim-kafka-comsum/consumer"
 	"zim-kafka-comsum/db"
@@ -27,7 +28,6 @@ func main() {
 		cancel()
 	}()
 
-	// 설정 로드
 	config.LoadConfig()
 
 	dbURL := config.GetDataSource()
@@ -44,9 +44,8 @@ func main() {
 
 	go api.StartAPIServer()
 
-	// 메시지 처리를 위한 채널 및 워커 풀 설정
-	messageChan := make(chan consumer.IoTData, 1000) // 버퍼 크기는 필요에 따라 조정
-	workerCount := 5                                 // 워커 수는 시스템 자원에 따라 조정
+	messageChan := make(chan common.IoTData, 1000) // 버퍼 크기는 필요에 따라 조정
+	workerCount := 5                               // 워커 수는 시스템 자원에 따라 조정
 	for i := 0; i < workerCount; i++ {
 		go consumer.Worker(ctx, pool, messageChan)
 	}

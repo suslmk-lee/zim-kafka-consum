@@ -4,47 +4,15 @@ package consumer
 import (
 	"context"
 	"encoding/json"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"time"
 
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/segmentio/kafka-go"
+	"zim-kafka-comsum/common"
 	"zim-kafka-comsum/config"
 	"zim-kafka-comsum/db"
 )
-
-type IoTData struct {
-	Device         string    `json:"Device"`
-	Timestamp      time.Time `json:"Timestamp"`
-	ProVer         int       `json:"ProVer"`
-	MinorVer       int       `json:"MinorVer"`
-	SN             int64     `json:"SN"`
-	Model          string    `json:"Model"`
-	TYield         float64   `json:"TYield"`
-	DYield         float64   `json:"DYield"`
-	PF             float64   `json:"PF"`
-	PMax           float64   `json:"PMax"`
-	PAC            float64   `json:"PAC"`
-	SAC            float64   `json:"SAC"`
-	UAB            float64   `json:"UAB"`
-	UBC            float64   `json:"UBC"`
-	UCA            float64   `json:"UCA"`
-	IA             float64   `json:"IA"`
-	IB             float64   `json:"IB"`
-	IC             float64   `json:"IC"`
-	Freq           float64   `json:"Freq"`
-	TMod           float64   `json:"TMod"`
-	TAmb           float64   `json:"TAmb"`
-	Mode           string    `json:"Mode"`
-	QAC            float64   `json:"QAC"`
-	BusCapacitance float64   `json:"BusCapacitance"`
-	ACCapacitance  float64   `json:"ACCapacitance"`
-	PDC            float64   `json:"PDC"`
-	PMaxLim        float64   `json:"PMaxLim"`
-	SMaxLim        float64   `json:"SMaxLim"`
-	IsSent         bool      `json:"IsSent"`
-	RegTimestamp   time.Time `json:"RegTimestamp"`
-}
 
 // CreateKafkaReader - Kafka 리더 설정 함수
 func CreateKafkaReader() *kafka.Reader {
@@ -70,7 +38,7 @@ func CreateKafkaReader() *kafka.Reader {
 }
 
 // ReadMessages - Kafka에서 메시지를 읽어 채널로 전달하는 함수
-func ReadMessages(ctx context.Context, reader *kafka.Reader, messageChan chan<- IoTData) {
+func ReadMessages(ctx context.Context, reader *kafka.Reader, messageChan chan<- common.IoTData) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -87,7 +55,7 @@ func ReadMessages(ctx context.Context, reader *kafka.Reader, messageChan chan<- 
 				continue
 			}
 
-			var data IoTData
+			var data common.IoTData
 			err = json.Unmarshal(msg.Value, &data)
 			if err != nil {
 				log.Printf("Error unmarshalling Kafka message: %v\nMessage Value: %s", err, string(msg.Value))
@@ -101,10 +69,10 @@ func ReadMessages(ctx context.Context, reader *kafka.Reader, messageChan chan<- 
 }
 
 // Worker - 메시지를 받아 배치로 DB에 삽입하는 워커 함수
-func Worker(ctx context.Context, pool *pgxpool.Pool, messageChan <-chan IoTData) {
+func Worker(ctx context.Context, pool *pgxpool.Pool, messageChan <-chan common.IoTData) {
 	batchSize := 100
 	batchTimeout := 2 * time.Second
-	batch := make([]IoTData, 0, batchSize)
+	batch := make([]common.IoTData, 0, batchSize)
 	timer := time.NewTimer(batchTimeout)
 	defer timer.Stop()
 

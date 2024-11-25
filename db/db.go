@@ -1,3 +1,4 @@
+// db/db.go
 package db
 
 import (
@@ -7,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	"zim-kafka-comsum/consumer"
+	"zim-kafka-comsum/common"
 )
 
 // ConnectDB - 데이터베이스 연결 풀 생성 함수
@@ -20,7 +21,7 @@ func ConnectDB(ctx context.Context, dbURL string) (*pgxpool.Pool, error) {
 }
 
 // InsertBatch - 배치 삽입 함수
-func InsertBatch(ctx context.Context, pool *pgxpool.Pool, batch []consumer.IoTData) {
+func InsertBatch(ctx context.Context, pool *pgxpool.Pool, batch []common.IoTData) {
 	if len(batch) == 0 {
 		return
 	}
