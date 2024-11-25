@@ -36,7 +36,7 @@ func InsertBatch(ctx context.Context, pool *pgxpool.Pool, batch []common.IoTData
 
 	// SQL 쿼리 동적 생성
 	sql := `
-		INSERT INTO IoTData (
+		INSERT INTO IoT_Data (
 			Device, Timestamp, ProVer, MinorVer, SN, Model, TYield, DYield, PF, PMax, PAC, SAC,
 			UAB, UBC, UCA, IA, IB, IC, Freq, TMod, TAmb, Mode, QAC, BusCapacitance,
 			ACCapacitance, PDC, PMaxLim, SMaxLim, IsSent
