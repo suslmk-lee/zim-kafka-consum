@@ -58,9 +58,15 @@ func InsertIoTData(conn *pgx.Conn, data IoTData) error {
 	defer cancel()
 
 	_, err := conn.Exec(ctx, `
-		INSERT INTO iot_data (device, timestamp, pro_ver, minor_ver, sn, model, tyield, dyield, pf, pmax, pac, sac, uab, ubc, uca, ia, ib, ic, freq, tmod, tamb, mode, qac, bus_capacitance, ac_capacitance, pdc, pmax_lim, smax_lim, is_sent)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)`,
-		data.Device, data.Timestamp, data.ProVer, data.MinorVer, data.SN, data.Model, data.TYield, data.DYield, data.PF, data.PMax, data.PAC, data.SAC, data.UAB, data.UBC, data.UCA, data.IA, data.IB, data.IC, data.Freq, data.TMod, data.TAmb, data.Mode, data.QAC, data.BusCapacitance, data.ACCapacitance, data.PDC, data.PMaxLim, data.SMaxLim, data.IsSent)
+		INSERT INTO iot_data (device, timestamp, pro_ver, minor_ver, sn, model, tyield, dyield, pf, pmax, 
+		                      pac, sac, uab, ubc, uca, ia, ib, ic, freq, tmod, 
+		                      tamb, mode, qac, bus_capacitance, ac_capacitance, pdc, pmax_lim, smax_lim, is_sent)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
+		        $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 
+		        $21, $22, $23, $24, $25, $26, $27, $28, $29)`,
+		data.Device, data.Timestamp, data.ProVer, data.MinorVer, data.SN, data.Model, data.TYield, data.DYield, data.PF, data.PMax,
+		data.PAC, data.SAC, data.UAB, data.UBC, data.UCA, data.IA, data.IB, data.IC, data.Freq, data.TMod,
+		data.TAmb, data.Mode, data.QAC, data.BusCapacitance, data.ACCapacitance, data.PDC, data.PMaxLim, data.SMaxLim, data.IsSent)
 
 	return err
 }
