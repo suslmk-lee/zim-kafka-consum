@@ -12,7 +12,7 @@ jobs:
     env:
       IMAGE_NAME: "zim-kafka-consumer"
       REGISTRY: "44ce789b-kr1-registry.container.nhncloud.com/container-platform-registry"
-      NAMESPACE: "iot-edge"
+      NAMESPACE: "kafka"
       DEPLOYMENT_NAME: "zim-kafka-consumer-deployment"
       CLUSTER_NAME: "kt-cluster"
       KUBECONFIG_DATA: ${{ secrets.KUBECONFIG_DATA }}
