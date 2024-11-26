@@ -2,7 +2,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: zim-kafka-consumer-config
-  namespace: iot-edge
 data:
   PROFILE: "prod"
   DATABASE_HOST: "postgresql-cp.iot-db"
@@ -53,7 +52,6 @@ data:
 kind: Secret
 metadata:
   name: ncr
-  namespace: iot-edge
 type: kubernetes.io/dockerconfigjson
 
 ---
@@ -61,7 +59,6 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: zim-kafka-consumer-secret
-  namespace: iot-edge
 type: Opaque
 data:
   DATABASE_USER: YWRtaW4=  # echo -n 'admin' | base64
@@ -72,7 +69,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: zim-kafka-consumer-deployment
-  namespace: iot-edge
 spec:
   replicas: 1
   selector:
@@ -129,7 +125,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: zim-kafka-consumer-service
-  namespace: iot-edge
 spec:
   selector:
     app: zim-kafka-consumer-app
