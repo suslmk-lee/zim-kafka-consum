@@ -9,7 +9,7 @@ data:
   DATABASE_PORT: "5432"
   KAFKA_HOST: "103.218.158.217"
   KAFKA_PORT: "31092"
-  KAFKA_TOPIC: "cp-db-topic1"
+  KAFKA_TOPIC: "cp-db-topic"
   KAFKA_GROUP_ID: "iot-data-group"
   INIT_DB_SCHEMA: |
     CREATE TABLE IF NOT EXISTS iot_data (
