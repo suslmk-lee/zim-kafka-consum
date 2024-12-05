@@ -28,7 +28,7 @@ func InitConfig() {
 
 type IoTData struct {
 	Device         string    `json:"Device"`
-	Timestamp      time.Time `json:"Timestamp"`
+	Timestamp      int64     `json:"Timestamp"`
 	ProVer         int       `json:"ProVer"`
 	MinorVer       int       `json:"MinorVer"`
 	SN             int64     `json:"SN"`
