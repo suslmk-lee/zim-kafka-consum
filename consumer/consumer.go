@@ -61,6 +61,7 @@ func ReadMessages(ctx context.Context, reader *kafka.Reader, messageChan chan<- 
 				log.Printf("Error unmarshalling Kafka message: %v\nMessage Value: %s", err, string(msg.Value))
 				continue
 			}
+			log.Printf("Received message data: %+v", data)
 			log.Printf("Message unmarshalled successfully: %+v %+v", data.Timestamp, data.Device)
 
 			messageChan <- data
