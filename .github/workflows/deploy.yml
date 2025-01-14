@@ -51,6 +51,7 @@ jobs:
           format: 'template'
           template: './trivy-html.tpl'
           output: 'trivy-report.html'
+          debug: true
           #exit-code: '0'
 
       - name: Check Trivy scan result
