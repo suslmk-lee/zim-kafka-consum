@@ -51,7 +51,7 @@ jobs:
           format: 'template'
           template: './trivy-html.tpl'
           output: 'trivy-report.html'
-          exit-code: '0'
+          #exit-code: '0'
 
       - name: Upload Trivy report as artifact
         uses: actions/upload-artifact@v3
@@ -59,16 +59,16 @@ jobs:
           name: trivy-report
           path: trivy-report.html
 
-      - name: Set up Kubernetes
-        uses: azure/k8s-set-context@v2
-        with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBECONFIG_DATA }}
+      #- name: Set up Kubernetes
+      #  uses: azure/k8s-set-context@v2
+      #  with:
+      #    method: kubeconfig
+      #    kubeconfig: ${{ secrets.KUBECONFIG_DATA }}
 
-      - name: Apply Kubernetes Deployment
-        run: |
-          kubectl apply -f deployment/deploy.yml -n $NAMESPACE
+      #- name: Apply Kubernetes Deployment
+      #  run: |
+      #    kubectl apply -f deployment/deploy.yml -n $NAMESPACE
 
-      - name: Restart Kubernetes Deployment
-        run: |
-          kubectl rollout restart deployment/$DEPLOYMENT_NAME -n $NAMESPACE
+      #- name: Restart Kubernetes Deployment
+      #  run: |
+      #    kubectl rollout restart deployment/$DEPLOYMENT_NAME -n $NAMESPACE
