@@ -57,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: trivy-scan-report
-          path: trivy-result.html
+          path: trivy-report.html
 
       #- name: Set up Kubernetes
       #  uses: azure/k8s-set-context@v2
