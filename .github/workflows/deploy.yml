@@ -53,6 +53,9 @@ jobs:
           output: 'trivy-report.html'
           #exit-code: '0'
 
+      - name: Check Trivy scan result
+        run: cat trivy-report.html
+
       - name: Upload Trivy report as artifact
         uses: actions/upload-artifact@v3
         with:
