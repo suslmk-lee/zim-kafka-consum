@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Trivy 취약점 분석 보고서</title>
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    .critical {
+      color: #d9534f; /* 빨간색 */
+    }
+    .high {
+      color: #f0ad4e; /* 주황색 */
+    }
+    .medium {
+      color: #337ab7; /* 파란색 */
+    }
+    .low {
+      color: #5cb85c; /* 초록색 */
+    }
+  </style>
+</head>
+<body>
+  <h1>Trivy 취약점 분석 보고서</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>심각도</th>
+        <th>패키지</th>
+        <th>취약점 ID</th>
+        <th>설명</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Vulnerabilities }}
+      <tr class="{{ lower .Severity }}">
+        <td>{{ .Severity }}</td>
+        <td>{{ .PkgName }}</td>
+        <td><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name={{ .VulnerabilityID }}" target="_blank">{{ .VulnerabilityID }}</a></td>
+        <td>{{ .Description }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</body>
+</html>
