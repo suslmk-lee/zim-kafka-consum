@@ -39,29 +39,25 @@ jobs:
           docker build -t $REGISTRY/$IMAGE_NAME:latest .
           docker push $REGISTRY/$IMAGE_NAME:latest
 
-      - name: Download Trivy HTML Template
-        run: curl -sSL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl -o trivy-html.tpl
-
-      - name: Scan Docker Image with Trivy
+      - name: Run Trivy vulnerability scanner
         env:
           IMAGE_URI: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.IMAGE_URI }}
           format: 'template'
-          template: './trivy-html.tpl'
+          template: '.github/workflows/trivy-report-template.html'
           output: 'trivy-report.html'
-          debug: true
-          #exit-code: '0'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
 
       - name: Check Trivy scan result
         run: cat trivy-report.html
 
-      - name: Upload Trivy report as artifact
+      - name: Upload Trivy scan report
         uses: actions/upload-artifact@v3
         with:
-          name: trivy-report
-          path: trivy-report.html
+          name: trivy-scan-report
+          path: trivy-result.html
 
       #- name: Set up Kubernetes
       #  uses: azure/k8s-set-context@v2
