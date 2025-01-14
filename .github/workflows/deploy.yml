@@ -51,8 +51,8 @@ jobs:
 
       - name: Convert JSON result to HTML report
         run: |
-          jq -r '.Results[].Vulnerabilities[] | "<tr><td>\(.Severity)</td><td>\(.PkgName)</td><td>\(.VulnerabilityID)</td><td>\(.Description)</td></tr>"' trivy-result.json | \
-            awk 'BEGIN {print "<h1>Trivy Scan Report</h1><table><thead><tr><th>Severity</th><th>Package</th><th>Vulnerability ID</th><th>Description</th></tr></thead><tbody>"} {print $0} END {print "</tbody></table>"}' > trivy-report.html
+          jq -r '.Results[].Vulnerabilities[] | "<tr class=\"\(.Severity | ascii_downcase)-severity\"><td>\(.Severity)</td><td>\(.PkgName)</td><td><a href=\"https://cve.mitre.org/cgi-bin/cvename.cgi?name=\(.VulnerabilityID)\" target=\"_blank\">\(.VulnerabilityID)</a></td><td>\(.Description | @html)</td></tr>"' trivy-result.json | \
+          awk 'BEGIN {print "<!DOCTYPE html><html lang=\"ko\"><head><meta charset=\"UTF-8\"><title>Trivy 취약점 분석 보고서</title><link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css\"><style>body {font-family: sans-serif;}.critical-severity {color: #d9534f;}.high-severity {color: #f0ad4e;}.medium-severity {color: #337ab7;}.low-severity {color: #5cb85c;}</style></head><body><div class=\"container\"><h1>Trivy 취약점 분석 보고서</h1><table class=\"table table-striped\"><thead><tr><th scope=\"col\">심각도</th><th scope=\"col\">패키지</th><th scope=\"col\">취약점 ID</th><th scope=\"col\">설명</th></tr></thead><tbody>"} {print $0} END {print "</tbody></table></div></body></html"}' > trivy-report.html
 
       - name: Upload Trivy scan report
         uses: actions/upload-artifact@v3
