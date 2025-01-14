@@ -39,25 +39,20 @@ jobs:
           docker build -t $REGISTRY/$IMAGE_NAME:latest .
           docker push $REGISTRY/$IMAGE_NAME:latest
 
-      - name: Check template file permission1
-        run: ls -l .github/workflows/trivy-report-template.html
-
       - name: Run Trivy vulnerability scanner
         env:
           IMAGE_URI: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.IMAGE_URI }}
-          format: 'template'
-          template: '.github/workflows/trivy-report-template.html'
-          output: 'trivy-report.html'
+          format: 'json' 
+          output: 'trivy-result.json'
           severity: 'CRITICAL,HIGH,MEDIUM,LOW'
 
-      - name: Check template file permission2
-        run: ls -l ./trivy-report.html
-
-      - name: Check Trivy scan result
-        run: cat trivy-report.html
+      - name: Convert JSON result to HTML report
+        run: |
+          jq -r '.Results[].Vulnerabilities[] | "<tr><td>\(.Severity)</td><td>\(.PkgName)</td><td>\(.VulnerabilityID)</td><td>\(.Description)</td></tr>"' trivy-result.json | \
+            awk 'BEGIN {print "<h1>Trivy Scan Report</h1><table><thead><tr><th>Severity</th><th>Package</th><th>Vulnerability ID</th><th>Description</th></tr></thead><tbody>"} {print $0} END {print "</tbody></table>"}' > trivy-report.html
 
       - name: Upload Trivy scan report
         uses: actions/upload-artifact@v3
